@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/kvn-alcantara/gocrawler/internal/crawler"
 	"github.com/kvn-alcantara/gocrawler/internal/fetcher"
@@ -17,6 +18,7 @@ func main() {
 	url := flag.String("url", "", "Start URL")
 	depth := flag.Int("depth", 3, "Crawl depth")
 	concurrency := flag.Int("concurrency", 5, "Concurrency level")
+	timeout := flag.Int("timeout", 10, "HTTP request timeout in seconds")
 	flag.Parse()
 
 	if *url == "" {
@@ -34,11 +36,15 @@ func main() {
 		cancel()
 	}()
 
+	fetcherOptions := fetcher.HTTPFetcherOptions{
+		Timeout: time.Duration(*timeout) * time.Second,
+	}
+
 	config := crawler.Config{
 		StartURL:    *url,
 		MaxDepth:    *depth,
 		Concurrency: *concurrency,
-		Fetcher:     fetcher.NewHTTPFetcher(),
+		Fetcher:     fetcher.NewHTTPFetcher(fetcherOptions),
 	}
 
 	visited := crawler.Crawl(ctx, config)

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/kvn-alcantara/gocrawler/internal/fetcher"
 	"github.com/stretchr/testify/assert"
@@ -93,4 +94,22 @@ func TestHTTPFetcherFetchBrokenHTML(t *testing.T) {
 		"http://example.com/page1",
 	}
 	assert.Equal(t, expectedLinks, links, "expected links to match")
+}
+
+func TestHTTPFetcherTimeoutOption(t *testing.T) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(2 * time.Second)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`<html><body><a href="http://example.com">Link</a></body></html>`))
+	}))
+	defer mockServer.Close()
+
+	shortTimeoutFetcher := fetcher.NewHTTPFetcher(fetcher.HTTPFetcherOptions{
+		Timeout: 100 * time.Millisecond,
+	})
+
+	_, err := shortTimeoutFetcher.Fetch(mockServer.URL)
+
+	assert.Error(t, err, "expected timeout error")
+	assert.Contains(t, err.Error(), "Client.Timeout exceeded", "error should indicate timeout")
 }

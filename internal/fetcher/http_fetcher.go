@@ -4,21 +4,43 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
 
 // HTTPFetcher implements the PageFetcher interface for fetching web pages.
-type HTTPFetcher struct{}
+type HTTPFetcher struct {
+	client *http.Client
+}
+
+// HTTPFetcherOptions defines configuration options for the HTTPFetcher
+type HTTPFetcherOptions struct {
+	Timeout time.Duration
+}
 
 // NewHTTPFetcher creates a new instance of HTTPFetcher.
-func NewHTTPFetcher() *HTTPFetcher {
-	return &HTTPFetcher{}
+func NewHTTPFetcher(options ...HTTPFetcherOptions) *HTTPFetcher {
+	var opts HTTPFetcherOptions
+	if len(options) > 0 {
+		opts = options[0]
+	}
+
+	timeout := opts.Timeout
+	if timeout == 0 {
+		timeout = 10 * time.Second
+	}
+
+	return &HTTPFetcher{
+		client: &http.Client{
+			Timeout: timeout,
+		},
+	}
 }
 
 // Fetch fetches the content of the given URL and returns a list of links found in the HTML.
 func (f *HTTPFetcher) Fetch(url string) ([]string, error) {
-	res, err := http.Get(url)
+	res, err := f.client.Get(url)
 	if err != nil {
 		return nil, err
 	}
