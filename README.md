@@ -12,7 +12,7 @@ go build ./cmd/webcrawler
 
 ## Flags
 - `--url`: The URL to start crawling from.
-- `--depth`: The maximum depth to crawl. Default is 1.
+- `--depth`: The maximum depth to crawl. Default is 3.
 - `--concurrency`: The number of concurrent requests to make. Default is 5.
 
 ## Testing
